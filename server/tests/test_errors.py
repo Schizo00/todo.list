@@ -1,5 +1,7 @@
+from typing import Any, NoReturn
 from uuid import uuid4
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -8,12 +10,13 @@ from app.main import app
 client = TestClient(app, raise_server_exceptions=False)
 
 
-def assert_error_shape(response, status_code: int) -> str:
+def assert_error_shape(response: httpx.Response, status_code: int) -> str:
     assert response.status_code == status_code
     body = response.json()
     assert list(body) == ["detail"]
-    assert isinstance(body["detail"], str)
-    return body["detail"]
+    detail = body["detail"]
+    assert isinstance(detail, str)
+    return detail
 
 
 def test_missing_todo_returns_404() -> None:
@@ -32,7 +35,7 @@ def test_missing_todo_returns_404() -> None:
         ({"title": "ok", "done": True}, "done: Extra inputs are not permitted"),
     ],
 )
-def test_invalid_body_returns_422_with_message(body: dict, expected: str) -> None:
+def test_invalid_body_returns_422_with_message(body: dict[str, Any], expected: str) -> None:
     response = client.post("/api/todos", json=body)
 
     assert assert_error_shape(response, 422) == expected
@@ -62,14 +65,14 @@ def test_invalid_todo_id_returns_422() -> None:
         ({"order": "up"}, "order: Input should be 'asc' or 'desc'"),
     ],
 )
-def test_invalid_list_params_return_422(params: dict, expected: str) -> None:
+def test_invalid_list_params_return_422(params: dict[str, Any], expected: str) -> None:
     response = client.get("/api/todos", params=params)
 
     assert assert_error_shape(response, 422) == expected
 
 
 def test_unhandled_error_returns_500_json(monkeypatch: pytest.MonkeyPatch) -> None:
-    def boom(*_):
+    def boom(*_: object) -> NoReturn:
         raise RuntimeError("database exploded")
 
     monkeypatch.setattr("app.crud.list_todos", boom)

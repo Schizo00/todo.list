@@ -11,7 +11,9 @@ class Settings(BaseSettings):
     database_url: str
 
 
-settings = Settings()  # type: ignore[call-arg]  # values come from the environment / .env
+# Values come from the environment / .env. mypy's pydantic plugin understands this;
+# Pylance doesn't, hence the pyright-only ignore.
+settings = Settings()  # pyright: ignore[reportCallIssue]
 engine = create_engine(settings.database_url)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 

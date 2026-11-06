@@ -23,7 +23,7 @@ class DbTestSettings(BaseSettings):
 
 @pytest.fixture(scope="session")
 def test_engine() -> Iterator[Engine]:
-    url = DbTestSettings().test_database_url  # type: ignore[call-arg]
+    url = DbTestSettings().test_database_url  # pyright: ignore[reportCallIssue]
     # Every row is deleted after each test, so refuse anything that isn't a test database.
     database_name = make_url(url).database or ""
     if not database_name.endswith("_test"):

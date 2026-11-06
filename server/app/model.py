@@ -31,7 +31,9 @@ class TodoCreate(BaseModel):
 
 
 class TodoUpdate(TodoCreate):
-    title: str | None = Field(default=None, max_length=200)
+    # Deliberately loosens the parent's `str`: a PUT may leave the title out.
+    # Sending null is still rejected by title_validator below.
+    title: str | None = Field(default=None, max_length=200)  # type: ignore[assignment]
 
     @field_validator("title")
     @classmethod

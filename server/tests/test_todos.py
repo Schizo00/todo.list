@@ -20,7 +20,8 @@ def create_todo(title: str = "Buy milk", description: str | None = None) -> dict
         body["description"] = description
     response = client.post("/api/todos", json=body)
     assert response.status_code == 201
-    return response.json()
+    todo: dict[str, Any] = response.json()
+    return todo
 
 
 def ids(response_body: dict[str, Any]) -> list[str]:
