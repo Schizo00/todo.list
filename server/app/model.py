@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import (
@@ -45,6 +46,17 @@ class TodoUpdate(TodoCreate):
             raise ValueError("Provide at least one of title or description")
         return self
 
+
+class TodoListParams(BaseModel):
+    """Query parameters for GET /api/todos."""
+
+    done: bool | None = None
+    limit: int = Field(default=20, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+    sort: Literal["created_at", "updated_at", "title"] = "created_at"
+    order: Literal["asc", "desc"] = "desc"
+
+
 class Todo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -54,3 +66,10 @@ class Todo(BaseModel):
     done: bool = False
     created_at: datetime
     updated_at: datetime
+
+
+class TodoPage(BaseModel):
+    todos: list[Todo]
+    total: int
+    limit: int
+    offset: int

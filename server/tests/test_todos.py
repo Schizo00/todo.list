@@ -65,17 +65,17 @@ def test_list_is_empty_when_there_are_no_todos() -> None:
     response = client.get("/api/todos")
 
     assert response.status_code == 200
-    assert response.json() == {"todos": []}
+    assert response.json() == {"todos": [], "total": 0, "limit": 20, "offset": 0}
 
 
-def test_list_returns_todos_in_creation_order() -> None:
+def test_list_returns_newest_first_by_default() -> None:
     first = create_todo("First")
     second = create_todo("Second")
 
     response = client.get("/api/todos")
 
     assert response.status_code == 200
-    assert ids(response.json()) == [first["id"], second["id"]]
+    assert ids(response.json()) == [second["id"], first["id"]]
 
 
 def test_list_filters_by_done() -> None:
@@ -88,6 +88,63 @@ def test_list_filters_by_done() -> None:
 
     assert ids(done_response.json()) == [finished["id"]]
     assert ids(open_response.json()) == [open_todo["id"]]
+
+
+# --- pagination and sorting ---
+
+
+def test_list_pages_with_limit_and_offset() -> None:
+    created = [create_todo(f"Todo {n}")["id"] for n in range(5)]
+    created.reverse()  # the list is newest first by default
+
+    first_page = client.get("/api/todos", params={"limit": 2, "offset": 0}).json()
+    last_page = client.get("/api/todos", params={"limit": 2, "offset": 4}).json()
+
+    assert ids(first_page) == created[:2]
+    assert first_page["total"] == 5
+    assert first_page["limit"] == 2
+    assert ids(last_page) == created[4:]
+    assert last_page["offset"] == 4
+
+
+def test_list_total_counts_filtered_todos_not_the_page() -> None:
+    for n in range(3):
+        create_todo(f"Open {n}")
+    finished = create_todo("Finished")
+    client.patch(f"/api/todos/{finished['id']}/done")
+
+    body = client.get("/api/todos", params={"done": "false", "limit": 1}).json()
+
+    assert len(body["todos"]) == 1
+    assert body["total"] == 3
+
+
+def test_list_offset_past_the_end_returns_empty_page() -> None:
+    create_todo()
+
+    body = client.get("/api/todos", params={"offset": 10}).json()
+
+    assert body["todos"] == []
+    assert body["total"] == 1
+
+
+def test_list_sorts_by_title_descending() -> None:
+    banana = create_todo("Banana")
+    apple = create_todo("Apple")
+    cherry = create_todo("Cherry")
+
+    body = client.get("/api/todos", params={"sort": "title", "order": "desc"}).json()
+
+    assert ids(body) == [cherry["id"], banana["id"], apple["id"]]
+
+
+def test_list_sorts_oldest_first_when_asked() -> None:
+    first = create_todo("First")
+    second = create_todo("Second")
+
+    body = client.get("/api/todos", params={"order": "asc"}).json()
+
+    assert ids(body) == [first["id"], second["id"]]
 
 
 # --- update ---

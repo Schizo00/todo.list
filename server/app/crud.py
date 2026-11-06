@@ -2,14 +2,19 @@ import logging
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.model import Todo, TodoCreate, TodoUpdate
+from app.model import Todo, TodoCreate, TodoListParams, TodoPage, TodoUpdate
 from app.tables import TodoRow
 
 logger = logging.getLogger(__name__)
 
+SORT_COLUMNS = {
+    "created_at": TodoRow.created_at,
+    "updated_at": TodoRow.updated_at,
+    "title": TodoRow.title,
+}
 
 
 def _get_row(db: Session, todo_id: UUID) -> TodoRow:
@@ -20,14 +25,27 @@ def _get_row(db: Session, todo_id: UUID) -> TodoRow:
     return row
 
 
-def list_todos(db: Session, done: bool | None = None) -> dict[str, list[Todo]]:
-    query = select(TodoRow).order_by(TodoRow.created_at)
-    if done is not None:
-        query = query.where(TodoRow.done == done)
+def list_todos(db: Session, params: TodoListParams) -> TodoPage:
+    query = select(TodoRow)
+    if params.done is not None:
+        query = query.where(TodoRow.done == params.done)
+
+    # Count the filtered rows before limit/offset, so clients know how many pages there are.
+    total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
+
+    column = SORT_COLUMNS[params.sort]
+    ordering = column.asc() if params.order == "asc" else column.desc()
+    # id breaks ties, so rows with equal sort values keep a stable order across pages.
+    query = query.order_by(ordering, TodoRow.id).limit(params.limit).offset(params.offset)
     rows = db.scalars(query).all()
 
-    logger.debug("Listed %d todos", len(rows))
-    return {"todos": [Todo.model_validate(row) for row in rows]}
+    logger.debug("Listed %d of %d todos", len(rows), total)
+    return TodoPage(
+        todos=[Todo.model_validate(row) for row in rows],
+        total=total,
+        limit=params.limit,
+        offset=params.offset,
+    )
 
 def create_todo(db: Session, todo_create: TodoCreate) -> Todo:
     row = TodoRow(id=uuid4(), **todo_create.model_dump())

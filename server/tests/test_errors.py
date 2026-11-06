@@ -49,6 +49,22 @@ def test_invalid_todo_id_returns_422() -> None:
     assert assert_error_shape(response, 422).startswith("todo_id: Input should be a valid UUID")
 
 
+@pytest.mark.parametrize(
+    ("params", "expected"),
+    [
+        ({"limit": 0}, "limit: Input should be greater than or equal to 1"),
+        ({"limit": 101}, "limit: Input should be less than or equal to 100"),
+        ({"offset": -1}, "offset: Input should be greater than or equal to 0"),
+        ({"sort": "colour"}, "sort: Input should be 'created_at', 'updated_at' or 'title'"),
+        ({"order": "up"}, "order: Input should be 'asc' or 'desc'"),
+    ],
+)
+def test_invalid_list_params_return_422(params: dict, expected: str) -> None:
+    response = client.get("/api/todos", params=params)
+
+    assert assert_error_shape(response, 422) == expected
+
+
 def test_unhandled_error_returns_500_json(monkeypatch: pytest.MonkeyPatch) -> None:
     def boom(*_):
         raise RuntimeError("database exploded")

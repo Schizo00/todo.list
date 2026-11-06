@@ -4,14 +4,14 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app import crud
 from app.database import Base, engine, get_db
-from app.model import Todo, TodoCreate, TodoUpdate
+from app.model import Todo, TodoCreate, TodoListParams, TodoPage, TodoUpdate
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,9 +35,9 @@ app = FastAPI(title="Todo List API", lifespan=lifespan)
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
-@app.get("/api/todos", status_code=200, response_model=dict[str, list[Todo]])
-def list_todos(db: DbSession, done: bool | None = None) -> dict[str, list[Todo]]:
-    return crud.list_todos(db, done=done)
+@app.get("/api/todos", status_code=200, response_model=TodoPage)
+def list_todos(db: DbSession, params: Annotated[TodoListParams, Query()]) -> TodoPage:
+    return crud.list_todos(db, params)
 
 @app.post("/api/todos", status_code=201, response_model=Todo)
 def create_todo(db: DbSession, todo_create: TodoCreate) -> Todo:
