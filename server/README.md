@@ -188,21 +188,6 @@ poetry run mypy app tests        # type check
 
 [`.github/workflows/tests.yml`](../.github/workflows/tests.yml) runs on every push and pull request. It runs `ruff check`, `ruff format --check` and `mypy`, then the test suite against a PostgreSQL service container. It reads `DATABASE_URL` and `TEST_DATABASE_URL` from the repository's Actions variables.
 
-## Deployment
-
-The API and its database are deployed to [Render](https://render.com), defined in [`render.yaml`](../render.yaml) (a Render Blueprint) at the repo root:
-
-- **`todo-api`:** a web service built from `server/Dockerfile`. Render sets `PORT`, and the container listens on it.
-- **`todo-db`:** a managed PostgreSQL database. It only accepts connections from Render's private network. Its URL is passed to the API as `DATABASE_URL`.
-
-The live service deploys from the `develop` branch. Each push to `develop` is deployed **once the GitHub Actions checks pass**, so a push that fails lint, type checking or tests never goes live.
-
-To set it up from scratch, open the Render dashboard and choose **New → Blueprint**, then pick this repository.
-
-The free plan has some limits:
-- The service sleeps after about 15 minutes without traffic, and the first request after that takes 30–60 seconds.
-- Free databases are deleted after 30 days.
-
 ## Assumptions and limitations
 
 - **No migrations.** The schema is created with `create_all`, which creates missing tables but never changes existing ones. A schema change needs a manual `ALTER TABLE`, or a reset with `docker compose down -v`. Alembic would be the next step for a real deployment.
@@ -214,5 +199,6 @@ The free plan has some limits:
 - **Pagination is offset-based.** It's simple, and fine at this scale, but a todo created or deleted between two requests shifts later pages by one. Cursor-based pagination would avoid that.
 - **The list returns 20 todos by default.** Clients that want everything must page through it, or pass `limit=100`.
 - **Sorting by `title`** uses the database's collation, so the order of upper- and lower-case letters depends on PostgreSQL's locale.
-- **No authentication.** Every client sees and edits the same todos, including on the public deployment.
+- **No authentication.** Every client sees and edits the same todos.
+- **Not deployed.** There is no live instance; run it locally with `docker compose up --build`. The image is ready for a host such as Render: it listens on `PORT` when one is set, and accepts the `postgres://` URLs that hosted databases provide.
 - **Logs go to standard output only.** Collecting and storing them is left to the platform (Docker, a log shipper). There are no request IDs to tie together the log lines from a single request.

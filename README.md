@@ -21,7 +21,7 @@ Then open http://localhost:8000/docs to try every endpoint from the browser.
 | [server/](server/) | Python backend: API, database access and tests. **Start with its README.** |
 | [client/](client/) | Placeholder for an optional frontend (not built). |
 | [docker-compose.yml](docker-compose.yml) | `db` (PostgreSQL), `server` (the API) and `test-db` (a throwaway database for the tests). |
-| [.github/workflows/](.github/workflows/) | CI: runs the test suite on every push and pull request. |
+| [.github/workflows/](.github/workflows/) | CI: lint, type check and tests on every push and pull request. |
 
 ## Stack
 
