@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app import endpoints
+from app import crud
 from app.database import Base, engine, get_db
 from app.model import Todo, TodoCreate, TodoUpdate
 
@@ -37,28 +37,28 @@ def health() -> dict[str, str]:
 
 @app.get("/api/todos", status_code=200, response_model=dict[str, list[Todo]])
 def list_todos(db: DbSession, done: bool | None = None) -> dict[str, list[Todo]]:
-    return endpoints.list_todos(db, done=done)
+    return crud.list_todos(db, done=done)
 
 @app.post("/api/todos", status_code=201, response_model=Todo)
 def create_todo(db: DbSession, todo_create: TodoCreate) -> Todo:
-    return endpoints.create_todo(db, todo_create)
+    return crud.create_todo(db, todo_create)
 
 @app.get("/api/todos/{todo_id}", status_code=200, response_model=Todo)
 def get_todo(db: DbSession, todo_id: UUID) -> Todo:
-    return endpoints.get_todo(db, todo_id)
+    return crud.get_todo(db, todo_id)
 
 
 @app.put("/api/todos/{todo_id}", status_code=200, response_model=Todo)
 def update_todo(db: DbSession, todo_id: UUID, todo_update: TodoUpdate) -> Todo:
-    return endpoints.update_todo(db, todo_id, todo_update)
+    return crud.update_todo(db, todo_id, todo_update)
 
 @app.patch("/api/todos/{todo_id}/done", status_code=200, response_model=Todo)
 def toggle_todo_status(db: DbSession, todo_id: UUID) -> Todo:
-    return endpoints.todo_toggle_status(db, todo_id)
+    return crud.toggle_todo_status(db, todo_id)
 
 @app.delete("/api/todos/{todo_id}", status_code=204)
 def delete_todo(db: DbSession, todo_id: UUID) -> None:
-    endpoints.delete_todo(db, todo_id)
+    crud.delete_todo(db, todo_id)
 
 
 @app.middleware("http")

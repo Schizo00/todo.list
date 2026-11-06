@@ -51,7 +51,7 @@ def update_todo(db: Session, todo_id: UUID, todo_update: TodoUpdate) -> Todo:
     logger.info("Updated todo %s", todo_id)
     return Todo.model_validate(row)
 
-def todo_toggle_status(db: Session, todo_id: UUID) -> Todo:
+def toggle_todo_status(db: Session, todo_id: UUID) -> Todo:
     row = _get_row(db, todo_id)
 
     row.done = not row.done

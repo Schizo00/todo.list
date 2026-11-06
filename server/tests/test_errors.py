@@ -53,7 +53,7 @@ def test_unhandled_error_returns_500_json(monkeypatch: pytest.MonkeyPatch) -> No
     def boom(*_):
         raise RuntimeError("database exploded")
 
-    monkeypatch.setattr("app.endpoints.list_todos", boom)
+    monkeypatch.setattr("app.crud.list_todos", boom)
     response = client.get("/api/todos")
 
     assert assert_error_shape(response, 500) == "Internal server error"
