@@ -14,4 +14,6 @@ RUN poetry install --only main --no-root --no-interaction
 COPY app ./app
 
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+# Hosts such as Render set PORT; locally and in docker compose it falls back to 8000.
+# `exec` replaces the shell with uvicorn, so it receives stop signals directly.
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --no-access-log"]
