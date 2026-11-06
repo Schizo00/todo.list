@@ -27,7 +27,9 @@ def test_engine() -> Iterator[Engine]:
     # Every row is deleted after each test, so refuse anything that isn't a test database.
     database_name = make_url(url).database or ""
     if not database_name.endswith("_test"):
-        raise RuntimeError(f"TEST_DATABASE_URL must point at a *_test database, got {database_name!r}")
+        raise RuntimeError(
+            f"TEST_DATABASE_URL must point at a *_test database, got {database_name!r}"
+        )
 
     engine = create_engine(url)
     Base.metadata.create_all(engine)

@@ -35,13 +35,16 @@ app = FastAPI(title="Todo List API", lifespan=lifespan)
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
+
 @app.get("/api/todos", status_code=200, response_model=TodoPage)
 def list_todos(db: DbSession, params: Annotated[TodoListParams, Query()]) -> TodoPage:
     return crud.list_todos(db, params)
 
+
 @app.post("/api/todos", status_code=201, response_model=Todo)
 def create_todo(db: DbSession, todo_create: TodoCreate) -> Todo:
     return crud.create_todo(db, todo_create)
+
 
 @app.get("/api/todos/{todo_id}", status_code=200, response_model=Todo)
 def get_todo(db: DbSession, todo_id: UUID) -> Todo:
@@ -52,9 +55,11 @@ def get_todo(db: DbSession, todo_id: UUID) -> Todo:
 def update_todo(db: DbSession, todo_id: UUID, todo_update: TodoUpdate) -> Todo:
     return crud.update_todo(db, todo_id, todo_update)
 
+
 @app.patch("/api/todos/{todo_id}/done", status_code=200, response_model=Todo)
 def toggle_todo_status(db: DbSession, todo_id: UUID) -> Todo:
     return crud.toggle_todo_status(db, todo_id)
+
 
 @app.delete("/api/todos/{todo_id}", status_code=204)
 def delete_todo(db: DbSession, todo_id: UUID) -> None:
@@ -71,14 +76,18 @@ async def log_requests(request: Request, call_next):
         return response
     finally:
         duration_ms = (time.perf_counter() - start) * 1000
-        logger.info("%s %s -> %s (%.1f ms)", request.method, request.url.path, status_code, duration_ms)
+        logger.info(
+            "%s %s -> %s (%.1f ms)", request.method, request.url.path, status_code, duration_ms
+        )
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     messages = []
     for error in exc.errors():
-        field = ".".join(str(part) for part in error["loc"] if part not in ("body", "path", "query"))
+        field = ".".join(
+            str(part) for part in error["loc"] if part not in ("body", "path", "query")
+        )
         message = error["msg"].removeprefix("Value error, ")
         messages.append(f"{field}: {message}" if field else message)
     detail = "; ".join(messages)

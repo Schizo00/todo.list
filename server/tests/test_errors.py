@@ -1,8 +1,9 @@
 from uuid import uuid4
 
 import pytest
-from app.main import app
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 client = TestClient(app, raise_server_exceptions=False)
 
@@ -38,7 +39,9 @@ def test_invalid_body_returns_422_with_message(body: dict, expected: str) -> Non
 
 
 def test_malformed_json_returns_422() -> None:
-    response = client.post("/api/todos", content=b"{nope", headers={"content-type": "application/json"})
+    response = client.post(
+        "/api/todos", content=b"{nope", headers={"content-type": "application/json"}
+    )
 
     assert "JSON decode error" in assert_error_shape(response, 422)
 

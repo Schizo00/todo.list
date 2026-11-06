@@ -1,4 +1,4 @@
-name: Tests
+name: Running Tests
 
 on:
   push:
@@ -50,6 +50,12 @@ jobs:
 
       - name: Install dependencies
         run: poetry install
+
+      - name: Lint
+        run: poetry run ruff check .
+
+      - name: Check formatting
+        run: poetry run ruff format --check .
 
       - name: Run tests
         run: poetry run pytest -v

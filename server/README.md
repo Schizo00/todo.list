@@ -150,9 +150,18 @@ poetry run pytest
 
 In VS Code, the **Tests** launch configuration starts `test-db` first.
 
-### Continuous integration
+## Linting and formatting
 
-[`.github/workflows/tests.yml`](../.github/workflows/tests.yml) runs the same suite on every push and pull request, against a PostgreSQL service container. It reads `DATABASE_URL` and `TEST_DATABASE_URL` from the repository's Actions variables.
+[Ruff](https://docs.astral.sh/ruff/) handles both, configured in `pyproject.toml` (100-character lines; pycodestyle, pyflakes, import order, bugbear and pyupgrade rules). From `server/`:
+
+```bash
+poetry run ruff check .          # lint; add --fix to apply safe fixes
+poetry run ruff format .         # reformat
+```
+
+## Continuous integration
+
+[`.github/workflows/tests.yml`](../.github/workflows/tests.yml) runs on every push and pull request. It runs `ruff check` and `ruff format --check`, then the test suite against a PostgreSQL service container. It reads `DATABASE_URL` and `TEST_DATABASE_URL` from the repository's Actions variables.
 
 ## Assumptions and limitations
 

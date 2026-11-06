@@ -47,6 +47,7 @@ def list_todos(db: Session, params: TodoListParams) -> TodoPage:
         offset=params.offset,
     )
 
+
 def create_todo(db: Session, todo_create: TodoCreate) -> Todo:
     row = TodoRow(id=uuid4(), **todo_create.model_dump())
     db.add(row)
@@ -54,10 +55,12 @@ def create_todo(db: Session, todo_create: TodoCreate) -> Todo:
     logger.info("Created todo %s", row.id)
     return Todo.model_validate(row)
 
+
 def get_todo(db: Session, todo_id: UUID) -> Todo:
     row = _get_row(db, todo_id)
-    
+
     return Todo.model_validate(row)
+
 
 def update_todo(db: Session, todo_id: UUID, todo_update: TodoUpdate) -> Todo:
     row = _get_row(db, todo_id)
@@ -69,6 +72,7 @@ def update_todo(db: Session, todo_id: UUID, todo_update: TodoUpdate) -> Todo:
     logger.info("Updated todo %s", todo_id)
     return Todo.model_validate(row)
 
+
 def toggle_todo_status(db: Session, todo_id: UUID) -> Todo:
     row = _get_row(db, todo_id)
 
@@ -76,6 +80,7 @@ def toggle_todo_status(db: Session, todo_id: UUID) -> Todo:
     db.commit()
     logger.info("Toggled todo %s done=%s", todo_id, row.done)
     return Todo.model_validate(row)
+
 
 def delete_todo(db: Session, todo_id: UUID) -> None:
     row = _get_row(db, todo_id)
