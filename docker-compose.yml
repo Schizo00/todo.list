@@ -39,6 +39,7 @@ services:
     build: ./server
     environment:
       DATABASE_URL: postgresql+psycopg://todo:todo@db:5432/todo
+      LOG_FORMAT: json
     ports:
       - "8000:8000"
     depends_on:

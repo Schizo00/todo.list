@@ -35,10 +35,30 @@ Configuration is read from environment variables. A `.env` file in `server/` is 
 
 | Variable | Used by | Example |
 |---|---|---|
-| `DATABASE_URL` | the app | `postgresql+psycopg://todo:todo@localhost:5432/todo` |
+| `DATABASE_URL` | the app (required) | `postgresql+psycopg://todo:todo@localhost:5432/todo` |
+| `LOG_FORMAT` | the app | `text` (default) or `json` |
+| `LOG_LEVEL` | the app | `DEBUG`, `INFO` (default), `WARNING` or `ERROR` |
 | `TEST_DATABASE_URL` | the test suite only | `postgresql+psycopg://todo:todo@localhost:5433/todo_test` |
 
-The app refuses to start if `DATABASE_URL` is not set.
+The app refuses to start if `DATABASE_URL` is not set, or if `LOG_FORMAT` or `LOG_LEVEL` has an unknown value.
+
+### Logging
+
+Every request is logged once, with its method, path, status and duration. Errors that return 500 are logged with their stack trace.
+
+With `LOG_FORMAT=text` (the default for local development), logs are readable lines:
+
+```
+2026-11-06 16:09:04,640 INFO app.main: GET /api/todos -> 200 (6.4 ms)
+```
+
+With `LOG_FORMAT=json` (set in `docker-compose.yml`), each log is one JSON object, so a log collector can filter and search by field:
+
+```json
+{"time": "2026-11-06T16:09:04.640723+00:00", "level": "INFO", "logger": "app.main", "message": "GET /api/todos -> 200 (6.4 ms)", "method": "GET", "path": "/api/todos", "status_code": 200, "duration_ms": 6.4}
+```
+
+uvicorn's own startup and shutdown messages use the same format.
 
 ## API
 
@@ -117,11 +137,14 @@ server/
 │   ├── model.py      # Pydantic models: request validation and response shapes
 │   ├── crud.py       # database operations, including the 404 when a todo is missing
 │   ├── tables.py     # SQLAlchemy table definition
-│   └── database.py   # settings, engine and the per-request session dependency
+│   ├── database.py   # engine and the per-request session dependency
+│   ├── config.py     # settings read from environment variables and .env
+│   └── logging_config.py # text or JSON log output
 └── tests/
     ├── conftest.py   # points every test at the test database and empties it after each test
     ├── test_todos.py # each endpoint's happy path, pagination, sorting, plus 404s
     ├── test_errors.py# error shape: 404, 422 cases, 500 without a stack trace
+    ├── test_logging.py # JSON log format
     └── test_health.py
 ```
 
@@ -176,4 +199,4 @@ poetry run mypy app tests        # type check
 - **The list returns 20 todos by default.** Clients that want everything must page through it, or pass `limit=100`.
 - **Sorting by `title`** uses the database's collation, so the order of upper- and lower-case letters depends on PostgreSQL's locale.
 - **No authentication.** Every client sees and edits the same todos.
-- **Logs are plain text** on standard output, one line per request with its duration.
+- **Logs go to standard output only.** Collecting and storing them is left to the platform (Docker, a log shipper). There are no request IDs to tie together the log lines from a single request.

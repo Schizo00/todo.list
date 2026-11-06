@@ -1,19 +1,10 @@
 from collections.abc import Iterator
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
+from app.config import settings
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-
-    database_url: str
-
-
-# Values come from the environment / .env. mypy's pydantic plugin understands this;
-# Pylance doesn't, hence the pyright-only ignore.
-settings = Settings()  # pyright: ignore[reportCallIssue]
 engine = create_engine(settings.database_url)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 

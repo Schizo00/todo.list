@@ -11,13 +11,12 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app import crud
+from app.config import settings
 from app.database import Base, engine, get_db
+from app.logging_config import configure_logging
 from app.model import Todo, TodoCreate, TodoListParams, TodoPage, TodoUpdate
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-)
+configure_logging(settings.log_format, settings.log_level)
 logger = logging.getLogger(__name__)
 
 DbSession = Annotated[Session, Depends(get_db)]
@@ -78,9 +77,20 @@ async def log_requests(
         status_code = response.status_code
         return response
     finally:
-        duration_ms = (time.perf_counter() - start) * 1000
+        duration_ms = round((time.perf_counter() - start) * 1000, 1)
         logger.info(
-            "%s %s -> %s (%.1f ms)", request.method, request.url.path, status_code, duration_ms
+            "%s %s -> %s (%.1f ms)",
+            request.method,
+            request.url.path,
+            status_code,
+            duration_ms,
+            # Separate fields for JSON logs, so requests can be filtered by status, path, etc.
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": status_code,
+                "duration_ms": duration_ms,
+            },
         )
 
 
