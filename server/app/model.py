@@ -1,19 +1,49 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 
 class TodoCreate(BaseModel):
-    title: str = Field(min_length=1, max_length=200)
-    description: str | None = None
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(max_length=200)
+    description: str | None = Field(default=None, max_length=1000)
+
+    @field_validator("title")
+    @classmethod
+    def title_validator(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Title must not be empty or whitespace")
+        return value.strip()
+
+    @field_validator("description")
+    @classmethod
+    def description_validator(cls, value: str | None) -> str | None:
+        return (value.strip() or None) if value is not None else None
 
 
-class TodoUpdate(BaseModel):
-    title: str | None = Field(default=None, min_length=1, max_length=200)
-    description: str | None = None
-    done: bool | None = None
+class TodoUpdate(TodoCreate):
+    title: str | None = Field(default=None, max_length=200)
 
+    @field_validator("title")
+    @classmethod
+    def title_validator(cls, value: str | None) -> str:
+        if value is None:
+            raise ValueError("Title must not be null")
+        return super().title_validator(value)
+
+    @model_validator(mode="after")
+    def at_least_one_field(self) -> "TodoUpdate":
+        if not self.model_fields_set:
+            raise ValueError("Provide at least one of title or description")
+        return self
 
 class Todo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
