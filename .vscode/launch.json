@@ -21,7 +21,8 @@
       "args": ["-q"],
       "cwd": "${workspaceFolder}/server",
       "python": "${workspaceFolder}/server/.venv/bin/python",
-      "justMyCode": false
+      "justMyCode": false,
+      "preLaunchTask": "Start test database"
     }
   ]
 }

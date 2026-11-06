@@ -8,6 +8,14 @@
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": { "reveal": "silent" },
       "problemMatcher": []
+    },
+    {
+      "label": "Start test database",
+      "type": "shell",
+      "command": "docker compose up -d --wait test-db",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "silent" },
+      "problemMatcher": []
     }
   ]
 }

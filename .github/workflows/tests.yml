@@ -1,0 +1,55 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # Throwaway Postgres for the test suite, matching the test-db service in docker-compose.yml.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: todo
+          POSTGRES_PASSWORD: todo
+          POSTGRES_DB: todo_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U todo -d todo_test"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # There is no .env file in CI. These come from the repository's
+      # Settings → Secrets and variables → Actions → Variables.
+      # DATABASE_URL is only needed because the app refuses to import without it;
+      # the tests themselves use TEST_DATABASE_URL.
+      DATABASE_URL: ${{ vars.DATABASE_URL }}
+      TEST_DATABASE_URL: ${{ vars.TEST_DATABASE_URL }}
+
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Poetry
+        run: pipx install poetry==2.2.1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: poetry
+          cache-dependency-path: server/poetry.lock
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run tests
+        run: poetry run pytest -v

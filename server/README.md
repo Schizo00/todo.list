@@ -7,7 +7,10 @@ Python backend for the todo list app.
 ```bash
 cd server
 poetry install
+cp .env.example .env   # then edit DATABASE_URL if your database differs
 ```
+
+Configuration is read from environment variables. A `.env` file in `server/` is loaded automatically, and real environment variables take precedence over it. The app refuses to start if `DATABASE_URL` is not set.
 
 ## Run
 
